@@ -14,7 +14,9 @@
 /* Create an empty queue */
 struct list_head *q_new()
 {
-    return NULL;
+    struct list_head *obj = malloc(sizeof(list_head));
+    obj->next = NULL;
+    return obj;
 }
 
 /* Free all storage used by queue */
