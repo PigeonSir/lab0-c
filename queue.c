@@ -28,7 +28,7 @@ void q_free(struct list_head *l)
         return;
     element_t *pos, *n;
     list_for_each_entry_safe (pos, n, l, list) {
-        q_relese_element(entry);
+        q_release_element(pos);
     }
     free(l);
 }
