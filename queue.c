@@ -22,17 +22,42 @@ struct list_head *q_new()
 }
 
 /* Free all storage used by queue */
-void q_free(struct list_head *l) {}
+void q_free(struct list_head *l)
+{
+    if (!l)
+        return;
+    element_t *pos, *n;
+    list_for_each_entry_safe (pos, n, l, list) {
+        q_relese_element(entry);
+    }
+    free(l);
+}
 
 /* Insert an element at head of queue */
 bool q_insert_head(struct list_head *head, char *s)
 {
+    if (!head)
+        return false;
+    element_t *new = malloc(sizeof(element_t));
+    if (!new)
+        return false;
+    new->value = malloc(strlen(s) + 1);
+    strncpy(new->value, s, strlen(s) + 1);
+    list_add(&new->list, head);
     return true;
 }
 
 /* Insert an element at tail of queue */
 bool q_insert_tail(struct list_head *head, char *s)
 {
+    if (!head)
+        return false;
+    element_t *new = malloc(sizeof(element_t));
+    if (!new)
+        return false;
+    new->value = malloc(strlen(s) + 1);
+    strncpy(new->value, s, strlen(s) + 1);
+    list_add_tail(&new->list, head);
     return true;
 }
 
@@ -80,13 +105,14 @@ bool q_delete_dup(struct list_head *head)
 void q_swap(struct list_head *head)
 {
     if (!head || !head->next)
-        return head;
+        return;
     struct list_head *temp = head;
     head = head->next;
     temp->next = head->next;
     head->next = temp;
-    head->next->next = q_swap(head->next->next);
-    return head;
+    if (head->next->next)
+        q_swap(head->next->next);
+    return;
     // https://leetcode.com/problems/swap-nodes-in-pairs/
 }
 
