@@ -63,6 +63,10 @@ bool q_insert_tail(struct list_head *head, char *s)
     if (!new)
         return false;
     new->value = malloc(strlen(s) + 1);
+    if (!new->value) {
+        free(new);
+        return false;
+    }
     strncpy(new->value, s, strlen(s) + 1);
     list_add_tail(&new->list, head);
     return true;
@@ -165,6 +169,7 @@ void q_reverse(struct list_head *head)
         temp = cur->next;
         cur->next = cur->prev;
         cur->prev = temp;
+        cur = temp;
     }
     temp = head->next;
     head->next = head->prev;
@@ -175,33 +180,69 @@ void q_reverse(struct list_head *head)
 /* Reverse the nodes of the list k at a time */
 void q_reverseK(struct list_head *head, int k)
 {
+    if (k == 1 || !head || list_empty(head))
+        return;
+    int count = 1;
+    struct list_head *start = head->next, *end = start->next;
+    while (start != head) {
+        while (end != head && count < k) {
+            end = end->next;
+            count++;
+        }
+        if (count < k)
+            break;
+        struct list_head *l = start->prev, *r = end->next;
+        while (start != end) {
+            struct list_head *temp = start->next;
+            start->next = r;
+            r->prev = start;
+            start = temp;
+        }
+        start->prev = l;
+        l->next = start;
+        start = r;
+        end = start->next;
+        count = 0;
+    }
     // https://leetcode.com/problems/reverse-nodes-in-k-group/
 }
 
 struct list_head *merge_two(struct list_head *left, struct list_head *right)
 {
-    struct list_head *head = left;
-    if (strcmp(list_entry(left, element_t, list)->value,
-               list_entry(right, element_t, list)->value) > 0)
-        list_move_tail(head = (right = right->next)->prev, left);
-    struct list_head *tail = head->prev;
-    while (left != tail && right->next != left) {
-        int cmp = strcmp(list_entry(left, element_t, list)->value,
-                         list_entry(right, element_t, list)->value);
-        if (cmp <= 0)  // to keep sorting stable, split condition as <= , >
-            left = left->next;
+    struct list_head *temp = NULL;
+    struct list_head **indirect = &temp;
+    for (struct list_head **node = NULL; left && right; *node = (*node)->next) {
+        if (strcmp(list_entry(left, element_t, list)->value,
+                   list_entry(right, element_t, list)->value) > 0)
+            node = &right;
         else
-            list_move_tail((right = right->next)->prev, left);
+            node = &left;
+        *indirect = *node;
+        indirect = &(*indirect)->next;
     }
-    while (right->next != left && right->next != head) {
-        int cmp = strcmp(list_entry(left, element_t, list)->value,
-                         list_entry(right, element_t, list)->value);
+    if (left)
+        *indirect = left;
+    if (right)
+        *indirect = right;
 
-        list_move_tail((right = right->next)->prev, cmp < 0 ? head : left);
-        // Shoud be cmp <= 0 because of stability
-    }
-    return head;
+    return temp;
 }
+
+struct list_head *mergesort(struct list_head *head)
+{
+    if (!head || !head->next)
+        return head;
+    struct list_head *fast = head, *slow = head;
+    while (fast && fast->next) {
+        fast = fast->next->next;
+        slow = slow->next;
+    }
+    fast = slow;
+    slow->prev->next = NULL;
+    struct list_head *left = mergesort(head), *right = mergesort(fast);
+    return merge_two(left, right);
+}
+
 /* Sort elements of queue in ascending order */
 void q_sort(struct list_head *head)
 {
@@ -229,13 +270,42 @@ void q_sort(struct list_head *head)
  * the right side of it */
 int q_descend(struct list_head *head)
 {
-    // https://leetcode.com/problems/remove-nodes-from-linked-list/
+    if (!head || list_empty(head) || list_is_singular(head))
+        return 0;
+    element_t *curMax = list_entry(head->prev, element_t, list);
+    struct list_head *temp = head->prev;
+
+    while (temp != head) {
+        element_t *cur = list_entry(temp, element_t, list);
+        if (strcmp(curMax->value, cur->value) > 0) {
+            temp = temp->prev;
+            list_del(temp->next);
+            q_release_element(cur);
+        } else {
+            curMax = cur;
+            temp = temp->prev;
+        }
+    }
+
     return 0;
 }
 
 /* Merge all the queues into one sorted queue, which is in ascending order */
 int q_merge(struct list_head *head)
 {
-    // https://leetcode.com/problems/merge-k-sorted-lists/
-    return 0;
+    if (!head || list_empty(head))
+        return 0;
+    queue_contex_t *c_entry, *c_safe,
+        *ret = list_first_entry(head, queue_contex_t, chain);
+
+    list_for_each_entry_safe (c_entry, c_safe, head, chain) {
+        if (c_entry != ret) {
+            list_splice_tail(c_entry->q, ret->q);
+            ret->size += c_entry->size;
+        }
+    }
+    ret->chain.next = head;
+    head->prev = &(ret->chain);
+    q_sort(ret->q);
+    return ret->size;
 }
