@@ -140,8 +140,10 @@ bool q_delete_dup(struct list_head *head)
     struct list_head *temp = head->next;
     while (temp != head && temp != head->prev) {
         if (!strcmp(list_entry(temp, element_t, list)->value,
-                    list_entry(temp->next, element_t, list)->value))
+                    list_entry(temp->next, element_t, list)->value)) {
+            free(list_entry(temp->next, element_t, list)->value);
             list_del(temp->next);
+        }
         temp = temp->next;
     }
     return true;
@@ -235,7 +237,21 @@ struct list_head *mergesort(struct list_head *head)
 }
 
 /* Sort elements of queue in ascending order */
-void q_sort(struct list_head *head) {}
+void q_sort(struct list_head *head)
+{
+    if (!head || !head->next)
+        return;
+    head->prev->next = NULL;
+    head->next = mergesort(head->next);
+    struct list_head *cur = head->next, *pre = head;
+    while (cur) {
+        cur->prev = pre;
+        pre = cur;
+        cur = cur->next;
+    }
+    head->prev = pre;
+    pre->next = head;
+}
 
 /* Remove every node which has a node with a strictly greater value anywhere to
  * the right side of it */
