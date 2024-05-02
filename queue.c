@@ -289,10 +289,9 @@ int q_merge(struct list_head *head)
         if (c_entry != ret) {
             list_splice_tail(c_entry->q, ret->q);
             ret->size += c_entry->size;
+            INIT_LIST_HEAD(c_entry->q);
         }
     }
-    ret->chain.next = head;
-    head->prev = &(ret->chain);
     q_sort(ret->q);
     return ret->size;
 }
