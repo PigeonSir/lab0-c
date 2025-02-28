@@ -82,7 +82,7 @@ element_t *q_remove_head(struct list_head *head, char *sp, size_t bufsize)
         return NULL;
     strncpy(sp, obj->value, bufsize - 1);
     sp[bufsize - 1] = '\0';
-    list_del(head->prev);
+    list_del(head->next);
     return obj;
 }
 
