@@ -35,7 +35,7 @@ void q_free(struct list_head *head)
 /* Insert an element at head of queue */
 bool q_insert_head(struct list_head *head, char *s)
 {
-    if (!head)
+    if (!head || !s)
         return false;
     element_t *new = malloc(sizeof(element_t));
     if (!new)
@@ -55,7 +55,7 @@ bool q_insert_head(struct list_head *head, char *s)
 /* Insert an element at tail of queue */
 bool q_insert_tail(struct list_head *head, char *s)
 {
-    if (!head)
+    if (!head || !s)
         return false;
     element_t *new = malloc(sizeof(element_t));
     if (!new)
@@ -133,15 +133,28 @@ bool q_delete_mid(struct list_head *head)
 /* Delete all nodes that have duplicate string */
 bool q_delete_dup(struct list_head *head)
 {
-    // https://leetcode.com/problems/remove-duplicates-from-sorted-list-ii/
+    if (!head || list_empty(head))
+        return false;
+    if (list_is_singular(head))
+        return true;
+    element_t *pos, *safe, *temp = NULL;
+    list_for_each_entry_safe (pos, safe, head, list) {
+        if (&safe->list != head && strlen(pos->value) == strlen(safe->value) &&
+            !strncmp(pos->value, safe->value, strlen(safe->value))) {
+            temp = safe;
+            list_del(&pos->list);
+            q_release_element(pos);
+        } else if (temp) {
+            list_del(&temp->list);
+            q_release_element(temp);
+            temp = NULL;
+        }
+    }
     return true;
 }
 
 /* Swap every two adjacent nodes */
-void q_swap(struct list_head *head)
-{
-    // https://leetcode.com/problems/swap-nodes-in-pairs/
-}
+void q_swap(struct list_head *head) {}
 
 /* Reverse elements in queue */
 void q_reverse(struct list_head *head) {}
