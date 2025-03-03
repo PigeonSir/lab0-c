@@ -219,7 +219,7 @@ int q_ascend(struct list_head *head)
             min = pos->value;
             continue;
         }
-        if (strcmp(min, pos->value) <= 0) {
+        if (strcmp(min, pos->value) >= 0) {
             min = pos->value;
         } else {
             list_del(&pos->list);
