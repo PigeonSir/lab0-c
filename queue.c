@@ -10,6 +10,12 @@
  *   cppcheck-suppress nullPointer
  */
 
+#define list_for_each_entry_safe_backward(entry, safe, head, member)   \
+    for (entry = list_entry((head)->prev, typeof(*entry), member),     \
+        safe = list_entry(entry->member.prev, typeof(*entry), member); \
+         &entry->member != (head); entry = safe,                       \
+        safe = list_entry(safe->member.prev, typeof(*entry), member))
+
 /* Create an empty queue */
 struct list_head *q_new()
 {
@@ -27,7 +33,7 @@ void q_free(struct list_head *head)
         return;
     element_t *pos, *n;
     list_for_each_entry_safe (pos, n, head, list) {
-        q_release_element(n);
+        q_release_element(pos);
     }
     free(head);
 }
@@ -201,16 +207,52 @@ void q_sort(struct list_head *head, bool descend) {}
  * the right side of it */
 int q_ascend(struct list_head *head)
 {
-    // https://leetcode.com/problems/remove-nodes-from-linked-list/
-    return 0;
+    if (!head || list_empty(head))
+        return 0;
+    if (list_is_singular(head))
+        return 1;
+    element_t *pos, *n;
+    char *min = NULL;
+    list_for_each_entry_safe_backward(pos, n, head, list)
+    {
+        if (!min) {
+            min = pos->value;
+            continue;
+        }
+        if (strcmp(min, pos->value) <= 0) {
+            min = pos->value;
+        } else {
+            list_del(&pos->list);
+            q_release_element(pos);
+        }
+    }
+    return q_size(head);
 }
 
 /* Remove every node which has a node with a strictly greater value anywhere to
  * the right side of it */
 int q_descend(struct list_head *head)
 {
-    // https://leetcode.com/problems/remove-nodes-from-linked-list/
-    return 0;
+    if (!head || list_empty(head))
+        return 0;
+    if (list_is_singular(head))
+        return 1;
+    element_t *pos, *n;
+    char *max = NULL;
+    list_for_each_entry_safe_backward(pos, n, head, list)
+    {
+        if (!max) {
+            max = pos->value;
+            continue;
+        }
+        if (strcmp(max, pos->value) <= 0) {
+            max = pos->value;
+        } else {
+            list_del(&pos->list);
+            q_release_element(pos);
+        }
+    }
+    return q_size(head);
 }
 
 /* Merge all the queues into one sorted queue, which is in ascending/descending
