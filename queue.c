@@ -200,8 +200,61 @@ void q_reverseK(struct list_head *head, int k)
     }
 }
 
-/* Sort elements of queue in ascending/descending order */
-void q_sort(struct list_head *head, bool descend) {}
+struct list_head *mergeTwo(struct list_head *left,
+                           struct list_head *right,
+                           bool descend)
+{
+    struct list_head *temp = NULL;
+    struct list_head **indirect = &temp;
+    for (struct list_head **node = NULL; left && right; *node = (*node)->next) {
+        if (strcmp(list_entry(left, element_t, list)->value,
+                   list_entry(right, element_t, list)->value) > 0)
+            node = descend ? &left : &right;
+        else
+            node = descend ? &right : &left;
+        *indirect = *node;
+        indirect = &(*indirect)->next;
+    }
+    if (left)
+        *indirect = left;
+    if (right)
+        *indirect = right;
+
+    return temp;
+}
+
+struct list_head *mergesort(struct list_head *head, bool descend)
+{
+    if (!head || !head->next)
+        return head;
+    struct list_head *fast = head, *slow = head;
+    while (fast && fast->next) {
+        fast = fast->next->next;
+        slow = slow->next;
+    }
+    fast = slow;
+    slow->prev->next = NULL;
+    struct list_head *left = mergesort(head, descend),
+                     *right = mergesort(fast, descend);
+    return mergeTwo(left, right, descend);
+}
+
+/* Sort elements of queue in ascending order */
+void q_sort(struct list_head *head, bool descend)
+{
+    if (!head || !head->next)
+        return;
+    head->prev->next = NULL;
+    head->next = mergesort(head->next, descend);
+    struct list_head *cur = head->next, *prePtr = head;
+    while (cur) {
+        cur->prev = prePtr;
+        prePtr = cur;
+        cur = cur->next;
+    }
+    head->prev = prePtr;
+    prePtr->next = head;
+}
 
 /* Remove every node which has a node with a strictly less value anywhere to
  * the right side of it */
@@ -259,6 +312,25 @@ int q_descend(struct list_head *head)
  * order */
 int q_merge(struct list_head *head, bool descend)
 {
-    // https://leetcode.com/problems/merge-k-sorted-lists/
-    return 0;
+    if (!head || list_empty(head))
+        return 0;
+    if (list_is_singular(head))
+        return q_size(head);
+    struct list_head *l, *r;
+    while (!list_is_singular(head)) {
+        l = head, r = head->prev;
+        while (l != r && l->next != r) {
+            l = l->next;
+            queue_contex_t *L = list_entry(l, queue_contex_t, chain),
+                           *R = list_entry(r, queue_contex_t, chain);
+            L->q->prev->next = NULL;
+            R->q->prev->next = NULL;
+            L->q = mergeTwo(L->q->next, R->q->next, descend);
+            L->size += R->size;
+            R->q = NULL;
+            r = r->prev;
+            list_del(r->next);
+        }
+    }
+    return list_first_entry(head, queue_contex_t, chain)->size;
 }
