@@ -308,23 +308,16 @@ int q_merge(struct list_head *head, bool descend)
 {
     if (!head || list_empty(head))
         return 0;
-    struct list_head *l, *r, *end = head->prev;
-
-    while (end != head->next) {
-        l = head->next, r = end;
-        while (l != r) {
-            queue_contex_t *L = list_entry(l, queue_contex_t, chain),
-                           *R = list_entry(r, queue_contex_t, chain);
-            L->q->prev->next = NULL;
-            R->q->prev->next = NULL;
-            L->q->next = mergeTwo(L->q->next, R->q->next, descend);
-            L->size += R->size;
-            INIT_LIST_HEAD(R->q);
-            r = r->prev;
-            if (l != r)
-                l = l->next;
-        }
-        end = r;
+    struct list_head *l = head->next, *r = l->next;
+    while (r != head) {
+        queue_contex_t *L = list_entry(l, queue_contex_t, chain),
+                       *R = list_entry(r, queue_contex_t, chain);
+        L->q->prev->next = NULL;
+        R->q->prev->next = NULL;
+        L->q->next = mergeTwo(L->q->next, R->q->next, descend);
+        L->size += R->size;
+        INIT_LIST_HEAD(R->q);
+        r = r->next;
     }
     queue_contex_t *node = list_entry(head->next, queue_contex_t, chain);
     struct list_head *cur = node->q->next, *prevPtr = node->q;
