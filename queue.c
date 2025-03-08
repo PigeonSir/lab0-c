@@ -46,14 +46,11 @@ bool q_insert_head(struct list_head *head, char *s)
     element_t *new = malloc(sizeof(element_t));
     if (!new)
         return false;
-    int len = strlen(s);
-    new->value = malloc(len + 1);
+    new->value = strdup(s);
     if (!new->value) {
         free(new);
         return false;
     }
-    strncpy(new->value, s, len);
-    new->value[len] = '\0';
     list_add(&new->list, head);
     return true;
 }
@@ -66,14 +63,11 @@ bool q_insert_tail(struct list_head *head, char *s)
     element_t *new = malloc(sizeof(element_t));
     if (!new)
         return false;
-    int len = strlen(s);
-    new->value = malloc(len + 1);
+    new->value = strdup(s);
     if (!new->value) {
         free(new);
         return false;
     }
-    strncpy(new->value, s, len);
-    new->value[len] = '\0';
     list_add_tail(&new->list, head);
     return true;
 }
@@ -315,10 +309,10 @@ int q_merge(struct list_head *head, bool descend)
     if (!head || list_empty(head))
         return 0;
     struct list_head *l, *r, *end = head->prev;
+
     while (end != head->next) {
-        l = head, r = end;
-        while (l != r && l->next != r) {
-            l = l->next;
+        l = head->next, r = end;
+        while (l != r) {
             queue_contex_t *L = list_entry(l, queue_contex_t, chain),
                            *R = list_entry(r, queue_contex_t, chain);
             L->q->prev->next = NULL;
@@ -327,18 +321,20 @@ int q_merge(struct list_head *head, bool descend)
             L->size += R->size;
             INIT_LIST_HEAD(R->q);
             r = r->prev;
+            if (l != r)
+                l = l->next;
         }
-        end = l;
+        end = r;
     }
     queue_contex_t *node = list_entry(head->next, queue_contex_t, chain);
-    struct list_head *cur = node->q->next, *prePtr = node->q;
+    struct list_head *cur = node->q->next, *prevPtr = node->q;
     while (cur) {
-        cur->prev = prePtr;
-        prePtr = cur;
+        cur->prev = prevPtr;
+        prevPtr = cur;
         cur = cur->next;
     }
-    node->q->prev = prePtr;
-    prePtr->next = node->q;
+    node->q->prev = prevPtr;
+    prevPtr->next = node->q;
 
     return node->size;
 }
