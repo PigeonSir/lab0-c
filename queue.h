@@ -251,5 +251,5 @@ int q_descend(struct list_head *head);
  * Return: the number of elements in queue after merging
  */
 int q_merge(struct list_head *head, bool descend);
-
+void q_listSort(struct list_head *head, bool descend);
 #endif /* LAB0_QUEUE_H */
