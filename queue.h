@@ -252,4 +252,5 @@ int q_descend(struct list_head *head);
  */
 int q_merge(struct list_head *head, bool descend);
 void q_listSort(struct list_head *head, bool descend);
+int cmp(struct list_head *a, struct list_head *b, bool descend);
 #endif /* LAB0_QUEUE_H */

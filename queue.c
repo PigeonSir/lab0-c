@@ -209,11 +209,7 @@ struct list_head *mergeTwo(struct list_head *left,
     struct list_head *temp = NULL;
     struct list_head **indirect = &temp;
     for (struct list_head **node = NULL; left && right; *node = (*node)->next) {
-        if (strcmp(list_entry(left, element_t, list)->value,
-                   list_entry(right, element_t, list)->value) > 0)
-            node = descend ? &left : &right;
-        else
-            node = descend ? &right : &left;
+        node = cmp(left, right, descend) > 0 ? &right : &left;
         *indirect = *node;
         indirect = &(*indirect)->next;
     }
